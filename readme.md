@@ -55,7 +55,7 @@
 
 ## paho-mqtt
 
-客户端
+客户端python实现
 
 ### 使用demo
 
@@ -96,38 +96,78 @@
 
 1. `Client`
 
-   1. 回调函数 : 
+   1. 回调函数 : (都要定义之后注册到特定用户上才可以使用)
 
       1. `def on_connect(client: mqtt.Client, userdata, flags, rc)`
 
-         实现连接成功之后进行函数回调
+         实现连接成功(即`broker`响应了你的连接请求,发送给你`CONNACk`消息)之后进行函数回调
 
          **通常在该函数内实现对主题的订阅**
 
-      2. `def on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage)`
+         `rc`为连接结果
+
+         *0: Connection successful *
+
+         *1: Connection refused - incorrect protocol version *
+
+         *2: Connection refused - invalid client identifier *
+
+         *3: Connection refused - server unavailable *
+
+         *4: Connection refused - bad username or password *
+
+         *5: Connection refused - not authorised *
+
+      2. `on_disconnect(client, userdata, rc)`
+
+         断开连接成功之后客户端的回调函数
+
+      3. `def on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage)`
 
          接受到订阅的消息时进行回调
+   
+         `msg`对象即为一条标准的`MQTT`通信内容`with members topic`, `payload`, `qos`, `retain`.
 
-      3. `def on_publish(client: mqtt.Client, userdata, result):`
-
-         发送消息成功后进行回调
-
+      4. `def message_callback_add(sub, callback)`
+   
+         该回调函数是针对于接受到特定的订阅主题时执行的方法
+   
+         `sub`为主题名
+   
+         `callback`为一个`on_message`方法,注意这个就不要注册到`client.on_message`上了
+   
+      5. `def message_callback_remove(sub)`
+   
+      6. `def on_publish(client: mqtt.Client, userdata, result):`
+   
+         发送消息(使用`cilent.publish()`)成功后进行回调
+   
+         注意即使`publish()`返回`true`,也不一定成功发送,该回调函数可以不错的判断发送是否成功
+   
    2. 操作函数
-
+   
       1. `connect(host, port=1883, keepalive=60, bind_address="")`
-
+   
          连接服务器
-
+   
       2. `publish(topic, payload=None, qos=0, retain=False)`
-
+   
          `payload`为发送消息内容
-
+   
          `qos`的等级1,2,3分别对应着3种发送消息方式
-
+   
          * 0 代表消息只发送一次,可能会丢失
          * 1 代表消息确保送达,但是可能收到多次
          * 2 代表消息确保送到且只收到一次
-
+         
+      3. `subscribe(topic, qos=0)` : 订阅`Broker`的某个主题
+      
+         通常在`on_connect`函数中执行
+      
+   3. `Network loop`
+   
+      1. 最好使用`loop_forever()`
+   
    
 
 
